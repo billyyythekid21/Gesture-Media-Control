@@ -3,7 +3,15 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
-import pyautogui
+#import pyautogui
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+scope = "user-library-read"
+
+sp = spotipy.Spotify(
+    auth_manager=SpotifyOAuth(scope=scope)
+)
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(
@@ -34,7 +42,6 @@ def count_fingers(hand_landmarks):
 
     return fingers.count(1), fingers
 
-
 while True:
     ret, frame = cap.read()
     
@@ -51,19 +58,28 @@ while True:
             total_fingers, fingers = count_fingers(hand_landmarks)
 
             if total_fingers == 5:
-                cv.putText(frame, "Play/Pause", (10,60),
-                            cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-                pyautogui.press("space")
+                cv.putText(
+                    frame, "Play/Pause", (10,60),
+                    cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2
+                )
+                if sp.current_playback()["is_playing"]:
+                    sp.pause_playback()
+                else:
+                    sp.start_playback()
 
             if fingers[0] == 1 and total_fingers == 1:
-                cv.putText(frame, "Next", (10,90),
-                            cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
-                pyautogui.hotkey("shift", "n")
+                cv.putText(
+                    frame, "Next", (10,90), 
+                    cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2
+                )
+                sp.next_track()
 
             if fingers[0] == 0 and total_fingers == 1:
-                cv.putText(frame, "Previous", (10,120),
-                            cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
-                pyautogui.hotkey("shift", "p")
+                cv.putText(
+                    frame, "Previous", (10,120),
+                    cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2
+                )
+                sp.previous_track()
 
     cv.imshow('Hand Tracking', frame)
 
