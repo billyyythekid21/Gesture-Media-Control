@@ -3,7 +3,6 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import numpy as np
-#import pyautogui
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -42,6 +41,21 @@ def count_fingers(hand_landmarks):
 
     return fingers.count(1), fingers
 
+def is_ok_gesture(hand_landmarks, frame_width, frame_height):
+    lm = hand_landmarks.landmark
+    ix, iy = lm[8].x * frame_width, lm[8].y * frame_height
+    tx, ty = lm[4].x * frame_width, lm[4].y * frame_height
+
+    dist = ((ix - tx) **2  + (iy - ty) ** 2) ** 0.5
+
+    middle_up = lm[12].y < lm[10].y
+    ring_up = lm[16].y < lm[14].y
+    pinky_up = lm[20].y < lm[18].y
+
+    if dist < frame_width * 0.06 and middle_up and ring_up and pinky_up:
+        return True
+    return False
+
 while True:
     ret, frame = cap.read()
     
@@ -56,6 +70,8 @@ while True:
             mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
             total_fingers, fingers = count_fingers(hand_landmarks)
+
+            height, width, _ = frame.shape
 
             if total_fingers == 5:
                 cv.putText(
@@ -80,6 +96,23 @@ while True:
                     cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2
                 )
                 sp.previous_track()
+
+            if is_ok_gesture(hand_landmarks, width, height):
+                cv.putText(
+                    frame, "Like/Unlike Song", (10,150),
+                    cv.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2
+                )
+                playback = sp.current_playback()
+
+                if playback and playback["item"]:
+                    track_id = playback["item"]["id"]
+                    saved = sp.current_user_saved_tracks_contains([track_id])[0]
+
+                    if saved:
+                        sp.current_user_saved_tracks_delete([track_id])
+                    else:
+                        sp.current_user_saved_tracks_add([track_id])
+
 
     cv.imshow('Hand Tracking', frame)
 
