@@ -5,8 +5,13 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import tkinter as tk
+from tkinter import ttk
+
+m = tk.Tk()
 
 scope = "user-library-read"
+#https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(scope=scope)
