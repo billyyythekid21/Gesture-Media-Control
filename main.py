@@ -26,9 +26,6 @@ artist_label.pack()
 status_label = tk.Label(m, text="Status: ", font=("Arial", 12))
 status_label.pack()
 
-scope = "user-library-read"
-#https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
-
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(
         client_id="56e55140db654932b4c24ef1e1e6e792",
