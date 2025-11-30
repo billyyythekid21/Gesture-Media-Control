@@ -5,11 +5,37 @@ from mediapipe.tasks.python import vision
 import numpy as np
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
+import requests
+from io import BytesIO
+
+m = tk.Tk()
+m.title('Spotify Gesture Media Control')
+
+album_art_img = tk.Label(m)
+album_art_img.pack()
+
+track_label = tk.Label(m, text="Song: ", font=("Arial", 14))
+track_label.pack()
+
+artist_label = tk.Label(m, text="Artist: ", font=("Arial", 12))
+artist_label.pack()
+
+status_label = tk.Label(m, text="Status: ", font=("Arial", 12))
+status_label.pack()
 
 scope = "user-library-read"
+#https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
 
 sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(scope=scope)
+    auth_manager=SpotifyOAuth(
+        client_id="56e55140db654932b4c24ef1e1e6e792",
+        client_secret="649c7e50d6c84114b5812bd401683be7",
+        redirect_uri="http://127.0.0.1:8888/callback",
+        scope="user-read-playback-state user-modify-playback-state user-library-read user-library-modify"
+    )
 )
 
 mp_hands = mp.solutions.hands
@@ -56,11 +82,11 @@ def is_ok_gesture(hand_landmarks, frame_width, frame_height):
         return True
     return False
 
-while True:
+def process():
     ret, frame = cap.read()
     
     if not ret:
-        break
+        return
 
     frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     results = hands.process(frame_rgb)
@@ -113,11 +139,39 @@ while True:
                     else:
                         sp.current_user_saved_tracks_add([track_id])
 
-
     cv.imshow('Hand Tracking', frame)
 
     if cv.waitKey(1) & 0xFF == ord('q'):
-        break
+        m.destroy()
+        return
+    
+    m.after(10, process())
+
+def update_gui():
+    playback = sp.current_playback()
+
+    if playback and playback["item"]:
+        track = playback["item"]["name"]
+        artist = playback["item"]["artists"][0]["name"]
+        img_url = playback["item"]["album"]["images"][1]["url"]
+
+        track_label.config(text=f"Track: {track}")
+        artist_label.config(text=f"Artist: {artist}")
+        status_label.config(text="Playing" if playback["is_playing"] else "Paused")
+
+        response = requests.get(img_url)
+        img_data = Image.open(BytesIO(response.content))
+        img_data = img_data.resize((200, 200))
+        cover = ImageTk.PhotoImage(img_data)
+
+        album_art_img.config(image=cover)
+        album_art_img.image = cover
+
+    m.after(5000, update_gui)
+
+process()
+update_gui()
+m.mainloop()
 
 cap.release()
 cv.destroyAllWindows()
