@@ -17,7 +17,7 @@ m.title('Spotify Gesture Media Control')
 album_art_img = tk.Label(m)
 album_art_img.pack()
 
-track_label = tk.Label(m, text="Track: ", font=("Arial", 14))
+track_label = tk.Label(m, text="Song: ", font=("Arial", 14))
 track_label.pack()
 
 artist_label = tk.Label(m, text="Artist: ", font=("Arial", 12))
@@ -30,7 +30,12 @@ scope = "user-library-read"
 #https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker
 
 sp = spotipy.Spotify(
-    auth_manager=SpotifyOAuth(scope=scope)
+    auth_manager=SpotifyOAuth(
+        client_id="56e55140db654932b4c24ef1e1e6e792",
+        client_secret="649c7e50d6c84114b5812bd401683be7",
+        redirect_uri="http://127.0.0.1:8888/callback",
+        scope="user-read-playback-state user-modify-playback-state user-library-read user-library-modify"
+    )
 )
 
 mp_hands = mp.solutions.hands
