@@ -11,6 +11,15 @@ from PIL import Image, ImageTk
 import requests
 from io import BytesIO
 
+with open("../secretfiles/GestureMediaControl/client_id.txt") as file1:
+            client_id = file1.read().strip()
+with open("../secretfiles/GestureMediaControl/client_secret.txt") as file2:
+            client_secret = file2.read().strip()
+with open("../secretfiles/GestureMediaControl/redirect_uri.txt") as file3:
+            redirect_uri = file3.read().strip()
+with open("../secretfiles/GestureMediaControl/scope.txt") as file4:
+            scope = file4.read().strip()
+
 m = tk.Tk()
 m.title('Spotify Gesture Media Control')
 
@@ -28,10 +37,10 @@ status_label.pack()
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(
-        client_id="56e55140db654932b4c24ef1e1e6e792",
-        client_secret="649c7e50d6c84114b5812bd401683be7",
-        redirect_uri="http://127.0.0.1:8888/callback",
-        scope="user-read-playback-state user-modify-playback-state user-library-read user-library-modify"
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+        scope=scope
     )
 )
 
