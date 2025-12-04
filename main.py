@@ -10,6 +10,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import requests
 from io import BytesIO
+import time
 
 with open("../secretfiles/GestureMediaControl/client_id.txt") as file1:
             client_id = file1.read().strip()
@@ -54,6 +55,15 @@ mp_draw = mp.solutions.drawing_utils
 
 cap = cv.VideoCapture(0)
 
+cooldowns = {
+    "playpause": 0,
+    "next": 0,
+    "previous": 0,
+    "like": 0
+}
+COOLDOWN_TIME = 1.0
+
+
 def count_fingers(hand_landmarks):
     tip_ids = [8, 12, 16, 20]
     fingers = []
@@ -96,6 +106,8 @@ def process():
 
     frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     results = hands.process(frame_rgb)
+
+    current_time = time.time()
     
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
@@ -110,40 +122,46 @@ def process():
                     frame, "Play/Pause", (10,60),
                     cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2
                 )
-                if sp.current_playback()["is_playing"]:
-                    sp.pause_playback()
-                else:
-                    sp.start_playback()
+                if current_time - cooldowns["playpause"] > COOLDOWN_TIME:
+                    if sp.current_playback()["is_playing"]:
+                        sp.pause_playback()
+                    else:
+                        sp.start_playback()
+                    cooldowns["playpause"] = current_time
 
             if fingers[0] == 1 and total_fingers == 1:
                 cv.putText(
                     frame, "Next", (10,90), 
                     cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2
                 )
-                sp.next_track()
+                if current_time - cooldowns["next"] > COOLDOWN_TIME:
+                    sp.next_track()
+                    cooldowns["next"] = current_time
 
             if fingers[0] == 0 and total_fingers == 1:
                 cv.putText(
                     frame, "Previous", (10,120),
                     cv.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2
                 )
-                sp.previous_track()
+                if current_time - cooldowns["previous"] > COOLDOWN_TIME:
+                    sp.previous_track()
+                    cooldowns["previous"] = current_time
 
             if is_ok_gesture(hand_landmarks, width, height):
                 cv.putText(
                     frame, "Like/Unlike Song", (10,150),
                     cv.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2
                 )
-                playback = sp.current_playback()
-
-                if playback and playback["item"]:
-                    track_id = playback["item"]["id"]
-                    saved = sp.current_user_saved_tracks_contains([track_id])[0]
-
-                    if saved:
-                        sp.current_user_saved_tracks_delete([track_id])
-                    else:
-                        sp.current_user_saved_tracks_add([track_id])
+                if current_time - cooldowns["like"] > COOLDOWN_TIME:
+                    playback = sp.current_playback()
+                    if playback and playback["item"]:
+                        track_id = playback["item"]["id"]
+                        saved = sp.current_user_saved_tracks_contains([track_id])[0]
+                        if saved:
+                            sp.current_user_saved_tracks_delete([track_id])
+                        else:
+                            sp.current_user_saved_tracks_add([track_id])
+                    cooldowns["like"] = current_time
 
     cv.imshow('Hand Tracking', frame)
 
