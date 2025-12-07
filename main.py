@@ -88,7 +88,7 @@ def is_ok_gesture(hand_landmarks, frame_width, frame_height):
     ix, iy = lm[8].x * frame_width, lm[8].y * frame_height
     tx, ty = lm[4].x * frame_width, lm[4].y * frame_height
 
-    dist = ((ix - tx) **2  + (iy - ty) ** 2) ** 0.5
+    dist = ((ix - tx) ** 2  + (iy - ty) ** 2) ** 0.5
 
     middle_up = lm[12].y < lm[10].y
     ring_up = lm[16].y < lm[14].y
