@@ -98,15 +98,17 @@ def is_ok_gesture(hand_landmarks, frame_width, frame_height):
         return True
     return False
 
+camera_label = tk.Label(m)
+camera_label.pack()
+
 def process():
     ret, frame = cap.read()
-    
     if not ret:
+        m.after(10, process)
         return
 
     frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     results = hands.process(frame_rgb)
-
     current_time = time.time()
     
     if results.multi_hand_landmarks:
@@ -162,14 +164,14 @@ def process():
                         else:
                             sp.current_user_saved_tracks_add([track_id])
                     cooldowns["like"] = current_time
-
-    cv.imshow('Hand Tracking', frame)
-
-    if cv.waitKey(1) & 0xFF == ord('q'):
-        m.destroy()
-        return
     
-    m.after(10, process())
+    img = Image.fromarray(frame_rgb)
+    imgtk = ImageTk.PhotoImage(image=img)
+
+    camera_label.config(image=imgtk)
+    camera_label.image = imgtk
+
+    m.after(10, process)
 
 def update_gui():
     playback = sp.current_playback()
@@ -198,4 +200,3 @@ update_gui()
 m.mainloop()
 
 cap.release()
-cv.destroyAllWindows()
