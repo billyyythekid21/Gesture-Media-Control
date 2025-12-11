@@ -22,7 +22,7 @@ with open("../secretfiles/GestureMediaControl/scope.txt") as file4:
             scope = file4.read().strip()
 
 m = tk.Tk()
-m.title('Spotify Gesture Media Control')
+m.title('Spotify Gesture Control')
 
 album_art_img = tk.Label(m)
 album_art_img.pack()
