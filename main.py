@@ -21,19 +21,19 @@ with open("../secretfiles/GestureMediaControl/redirect_uri.txt") as file3:
 with open("../secretfiles/GestureMediaControl/scope.txt") as file4:
             scope = file4.read().strip()
 
-root = tk.Tk()
-root.title('Spotify Gesture Control')
+m = tk.Tk()
+m.title('Spotify Gesture Control')
 
-album_art_img = tk.Label(root)
+album_art_img = tk.Label(m)
 album_art_img.pack()
 
-track_label = tk.Label(root, text="Song: ", font=("Arial", 14))
+track_label = tk.Label(m, text="Song: ", font=("Arial", 14))
 track_label.pack()
 
-artist_label = tk.Label(root, text="Artist: ", font=("Arial", 12))
+artist_label = tk.Label(m, text="Artist: ", font=("Arial", 12))
 artist_label.pack()
 
-status_label = tk.Label(root, text="Status: ", font=("Arial", 12))
+status_label = tk.Label(m, text="Status: ", font=("Arial", 12))
 status_label.pack()
 
 sp = spotipy.Spotify(
@@ -62,15 +62,7 @@ cooldowns = {
     "like": 0
 }
 COOLDOWN_TIME = 1.0
-FRAME_DELAY = 10
-GUI_UPDATE_DELAY = 5000
 
-def safe_current_playback():
-    try:
-        return sp.current_playback()
-    except Exception as e:
-        print("Spotify error:", e)
-        return None
 
 def count_fingers(hand_landmarks):
     tip_ids = [8, 12, 16, 20]
@@ -106,13 +98,13 @@ def is_ok_gesture(hand_landmarks, frame_width, frame_height):
         return True
     return False
 
-camera_label = tk.Label(root)
+camera_label = tk.Label(m)
 camera_label.pack()
 
 def process():
     ret, frame = cap.read()
     if not ret:
-        root.after(FRAME_DELAY, process)
+        m.after(10, process)
         return
 
     frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
@@ -133,8 +125,7 @@ def process():
                     cv.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2
                 )
                 if current_time - cooldowns["playpause"] > COOLDOWN_TIME:
-                    playback = safe_current_playback()
-                    if playback and playback.get("is_playing"):
+                    if sp.current_playback()["is_playing"]:
                         sp.pause_playback()
                     else:
                         sp.start_playback()
@@ -164,8 +155,8 @@ def process():
                     cv.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2
                 )
                 if current_time - cooldowns["like"] > COOLDOWN_TIME:
-                    playback = safe_current_playback()
-                    if playback and playback.get("item"):
+                    playback = sp.current_playback()
+                    if playback and playback["item"]:
                         track_id = playback["item"]["id"]
                         saved = sp.current_user_saved_tracks_contains([track_id])[0]
                         if saved:
@@ -180,12 +171,12 @@ def process():
     camera_label.config(image=imgtk)
     camera_label.image = imgtk
 
-    root.after(FRAME_DELAY, process)
+    m.after(10, process)
 
 def update_gui():
-    playback = safe_current_playback()
+    playback = sp.current_playback()
 
-    if playback and playback.get("item"):
+    if playback and playback["item"]:
         track = playback["item"]["name"]
         artist = playback["item"]["artists"][0]["name"]
         img_url = playback["item"]["album"]["images"][1]["url"]
@@ -194,28 +185,18 @@ def update_gui():
         artist_label.config(text=f"Artist: {artist}")
         status_label.config(text="Playing" if playback["is_playing"] else "Paused")
 
-        try:
-            response = requests.get(img_url, timeout=5)
-            img_data = Image.open(BytesIO(response.content))
-            img_data = img_data.resize((200, 200))
-            cover = ImageTk.PhotoImage(img_data)
-        except Exception as e:
-            print("Image load error:", e)
-            return
+        response = requests.get(img_url)
+        img_data = Image.open(BytesIO(response.content))
+        img_data = img_data.resize((200, 200))
+        cover = ImageTk.PhotoImage(img_data)
 
         album_art_img.config(image=cover)
         album_art_img.image = cover
 
-    root.after(GUI_UPDATE_DELAY, update_gui)
-
-def on_close():
-    cap.release()
-    root.destroy()
-
-root.protocol("WM_DELETE_WINDOW", on_close)
+    m.after(5000, update_gui)
 
 process()
 update_gui()
-root.mainloop()
+m.mainloop()
 
 cap.release()
