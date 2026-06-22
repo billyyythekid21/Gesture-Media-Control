@@ -1,0 +1,19 @@
+# Virtual environment
+.venv/
+
+# IDE
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Spotify auth cache
+.cache
+
+# MediaPipe model (large binary, download separately)
+hand_landmarker.task
+
+# macOS
+.DS_Store
