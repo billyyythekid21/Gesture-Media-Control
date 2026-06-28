@@ -17,3 +17,10 @@ hand_landmarker.task
 
 # macOS
 .DS_Store
+
+# Custom gesture training scaffolding
+custom_gestures.py
+trainer.py
+gesture_config.json
+custom_gesture_model.joblib
+training_data/
